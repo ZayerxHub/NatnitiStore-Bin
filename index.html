@@ -129,13 +129,13 @@
                 }
             }, []);
 
-            const generateViewURL = () => {
-                const encodedData = encodeData(items);
-                const viewURL = `${window.location.origin}${window.location.pathname}?data=${encodedData}`;
-                navigator.clipboard.writeText(viewURL).then(() => alert('URL copied to clipboard!'));
-                window.location.href = viewURL;
-            };
+const generateViewURL = () => {
+    const encodedData = encodeData(items);
+    const viewURL = `${window.location.origin}${window.location.pathname}?data=${encodedData}`;
 
+    // Redirect ทันทีไปหน้า view
+    window.location.href = viewURL;
+};
             const downloadAsPNG = async () => {
                 const element = document.getElementById('order-card');
                 if(!element) return;
@@ -187,7 +187,7 @@
                                 </div>
                             </div>
                             <div>
-                                <h3 className="text-lg font-semibold mb-4">ໃບບິນຕົວຢ່າງ</h3>
+                                <h3 className="text-lg font-semibold mb-4">ຕົວຢ່າງ</h3>
                                 <OrderTable items={items} />
                             </div>
                         </div>

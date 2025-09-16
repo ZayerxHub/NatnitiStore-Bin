@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Card Generator</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;500;600;700&display=swap');
+        body { font-family: 'Noto Sans Lao', sans-serif; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const encodeData = (data) => btoa(JSON.stringify(data));
+        const decodeData = (encodedData) => {
+            try { return JSON.parse(atob(encodedData)); } catch { return null; }
+        };
+        const formatPrice = (price) => new Intl.NumberFormat('en-US').format(price);
+
+        // QR Code Component
+        const QRCode = () => (
+            <div className="w-64 h-64 flex items-center justify-center mx-auto mb-6 border-2 border-gray-400">
+                <img 
+                    src="https://img5.pic.in.th/file/secure-sv1/quality_restoration_25680916165413506.jpeg"
+                    alt="QR Code" 
+                    className="w-full h-full object-contain"
+                />
+            </div>
+        );
+
+        // Order Form
+        const OrderForm = ({ items, setItems }) => {
+            const [itemName, setItemName] = useState('');
+            const [quantity, setQuantity] = useState('');
+            const [price, setPrice] = useState('');
+
+            const addItem = () => {
+                if(itemName && quantity && price) {
+                    setItems([...items, { id: Date.now(), name: itemName, quantity: parseInt(quantity), price: parseFloat(price) }]);
+                    setItemName(''); setQuantity(''); setPrice('');
+                }
+            };
+
+            return (
+                <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+                    <h3 className="text-lg font-semibold mb-4">ເພີ່ມລາຍການ</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <input type="text" placeholder="ຊື່ລາຍການ" value={itemName} onChange={e => setItemName(e.target.value)} className="border border-gray-300 rounded px-3 py-2" />
+                        <input type="number" placeholder="ຈຳນວນ" value={quantity} onChange={e => setQuantity(e.target.value)} className="border border-gray-300 rounded px-3 py-2" />
+                        <input type="number" placeholder="ລາຄາ (ກີບ)" value={price} onChange={e => setPrice(e.target.value)} className="border border-gray-300 rounded px-3 py-2" />
+                    </div>
+                    <button onClick={addItem} className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700 transition-colors">
+                        ເພີ່ມລາຍການ
+                    </button>
+                </div>
+            );
+        };
+
+        // Order Table
+        const OrderTable = ({ items }) => {
+            const total = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+            return (
+                <div className="bg-red-600 p-6 rounded-lg shadow-lg">
+                    <QRCode />
+                    <h1 className="text-2xl font-bold text-white text-center mb-6">ບັນຊີຮ້ານ Natniti Store</h1>
+                    <div className="bg-white rounded-lg overflow-hidden">
+                        <table className="w-full">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th className="px-4 py-3 text-left font-semibold">ລາຍການ</th>
+                                    <th className="px-4 py-3 text-center font-semibold">ຈຳນວນ</th>
+                                    <th className="px-4 py-3 text-right font-semibold">ລາຄາ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {items.map(item => (
+                                    <tr key={item.id} className="border-t">
+                                        <td className="px-4 py-3">{item.name}</td>
+                                        <td className="px-4 py-3 text-center">{item.quantity}</td>
+                                        <td className="px-4 py-3 text-right">{formatPrice(item.quantity*item.price)} ກີບ</td>
+                                    </tr>
+                                ))}
+                                <tr className="border-t-2 border-gray-300 bg-gray-50">
+                                    <td className="px-4 py-3 font-bold" colSpan="2">ລວມ:</td>
+                                    <td className="px-4 py-3 text-right font-bold text-lg">{formatPrice(total)} ກີບ</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            );
+        };
+
+        // View Page
+        const ViewPage = ({ items, onDownload }) => (
+            <div className="min-h-screen bg-gray-100 p-4">
+                <div className="max-w-md mx-auto">
+                    <div id="order-card">
+                        <OrderTable items={items} />
+                    </div>
+                    <div className="mt-6 text-center">
+                        <button onClick={onDownload} className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-semibold">
+                            📱 Download as PNG
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+
+        // Main App
+        const OrderCardGenerator = () => {
+            const [items, setItems] = useState([]);
+            const [currentView, setCurrentView] = useState('generator');
+
+            useEffect(() => {
+                const encodedData = new URLSearchParams(window.location.search).get('data');
+                if(encodedData){
+                    const decodedItems = decodeData(encodedData);
+                    if(decodedItems){ setItems(decodedItems); setCurrentView('view'); }
+                }
+            }, []);
+
+            const generateViewURL = () => {
+                const encodedData = encodeData(items);
+                const viewURL = `${window.location.origin}${window.location.pathname}?data=${encodedData}`;
+                navigator.clipboard.writeText(viewURL).then(() => alert('URL copied to clipboard!'));
+                window.location.href = viewURL;
+            };
+
+            const downloadAsPNG = async () => {
+                const element = document.getElementById('order-card');
+                if(!element) return;
+                try {
+                    const canvas = await html2canvas(element, { backgroundColor:'#f3f4f6', scale:2, useCORS:true });
+                    const link = document.createElement('a');
+                    link.download = `order-card-${Date.now()}.png`;
+                    link.href = canvas.toDataURL();
+                    link.click();
+                } catch (err) { console.error(err); alert('Error generating image.'); }
+            };
+
+            const goBackToGenerator = () => { window.history.pushState({}, '', window.location.pathname); setCurrentView('generator'); };
+
+            if(currentView==='view') return (
+                <div>
+                    <ViewPage items={items} onDownload={downloadAsPNG} />
+                    <div className="fixed top-4 left-4">
+                        <button onClick={goBackToGenerator} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                            ← ກັບໄປແກ້ໄຂ
+                        </button>
+                    </div>
+                </div>
+            );
+
+            return (
+                <div className="min-h-screen bg-gray-100 p-4">
+                    <div className="max-w-4xl mx-auto">
+                        <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">Order Card Generator</h1>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <div>
+                                <OrderForm items={items} setItems={setItems} />
+                                <div className="bg-white p-6 rounded-lg shadow-md">
+                                    <h3 className="text-lg font-semibold mb-4">ລາຍການປັດຈຸບັນ</h3>
+                                    {items.length===0 ? <p className="text-gray-500">ຍັງບໍ່ມີລາຍການ</p> :
+                                        <div className="space-y-2">
+                                            {items.map(item => (
+                                                <div key={item.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                                                    <span>{item.name}</span>
+                                                    <span className="text-sm text-gray-600">{item.quantity} x {formatPrice(item.price)} = {formatPrice(item.quantity*item.price)} ກີບ</span>
+                                                    <button onClick={()=>setItems(items.filter(i=>i.id!==item.id))} className="text-red-600 hover:text-red-800 ml-2">✕</button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    }
+                                    {items.length>0 && <button onClick={generateViewURL} className="w-full mt-4 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
+                                        🔗 ສ້າງໜ້າແບບສຳລັບແກ້ໄຂ
+                                    </button>}
+                                </div>
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-semibold mb-4">ຕົວຢ່າງ</h3>
+                                <OrderTable items={items} />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<OrderCardGenerator />, document.getElementById('root'));
+    </script>
+</body>
+</html>

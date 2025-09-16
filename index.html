@@ -116,85 +116,96 @@
             </div>
         );
 
-        // Main App
-        const OrderCardGenerator = () => {
-            const [items, setItems] = useState([]);
-            const [currentView, setCurrentView] = useState('generator');
+// Main App
+const OrderCardGenerator = () => {
+    const [items, setItems] = React.useState([]);
+    const [currentView, setCurrentView] = React.useState('generator');
 
-            useEffect(() => {
-                const encodedData = new URLSearchParams(window.location.search).get('data');
-                if(encodedData){
-                    const decodedItems = decodeData(encodedData);
-                    if(decodedItems){ setItems(decodedItems); setCurrentView('view'); }
-                }
-            }, []);
+    // ตรวจสอบ URL ทุกครั้งที่โหลดหน้า
+    React.useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const encodedData = urlParams.get('data');
+        if (encodedData) {
+            const decodedItems = decodeData(encodedData);
+            if (decodedItems) {
+                setItems(decodedItems);
+                setCurrentView('view'); // สลับไปหน้า view
+            }
+        }
+    }, []);
 
-const generateViewURL = () => {
-    const encodedData = encodeData(items);
-    const viewURL = `${window.location.origin}${window.location.pathname}?data=${encodedData}`;
+    // กดปุ่มแล้ว redirect ไป view + encode items
+    const generateViewURL = () => {
+        const encodedData = encodeData(items);
+        const viewURL = `${window.location.origin}${window.location.pathname}?data=${encodedData}`;
+        window.location.href = viewURL; // redirect ไปหน้าใหม่
+    };
 
-    // Redirect ทันทีไปหน้า view
-    window.location.href = viewURL;
-};
-            const downloadAsPNG = async () => {
-                const element = document.getElementById('order-card');
-                if(!element) return;
-                try {
-                    const canvas = await html2canvas(element, { backgroundColor:'#f3f4f6', scale:2, useCORS:true });
-                    const link = document.createElement('a');
-                    link.download = `order-card-${Date.now()}.png`;
-                    link.href = canvas.toDataURL();
-                    link.click();
-                } catch (err) { console.error(err); alert('Error generating image.'); }
-            };
+    // ดาวน์โหลด PNG
+    const downloadAsPNG = async () => {
+        const element = document.getElementById('order-card');
+        if (!element) return;
+        try {
+            const canvas = await html2canvas(element, { backgroundColor:'#f3f4f6', scale:2, useCORS:true });
+            const link = document.createElement('a');
+            link.download = `order-card-${Date.now()}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+        } catch (err) { console.error(err); alert('Error generating image.'); }
+    };
 
-            const goBackToGenerator = () => { window.history.pushState({}, '', window.location.pathname); setCurrentView('generator'); };
+    const goBackToGenerator = () => {
+        window.history.pushState({}, '', window.location.pathname);
+        setCurrentView('generator');
+    };
 
-            if(currentView==='view') return (
-                <div>
-                    <ViewPage items={items} onDownload={downloadAsPNG} />
-                    <div className="fixed top-4 left-4">
-                        <button onClick={goBackToGenerator} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
-                            ← ກັບໄປແກ້ໄຂ
-                        </button>
-                    </div>
+    if (currentView === 'view') {
+        return (
+            <div>
+                <ViewPage items={items} onDownload={downloadAsPNG} />
+                <div className="fixed top-4 left-4">
+                    <button onClick={goBackToGenerator} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                        ← ກັບໄປແກ້ໄຂ
+                    </button>
                 </div>
-            );
+            </div>
+        );
+    }
 
-            return (
-                <div className="min-h-screen bg-gray-100 p-4">
-                    <div className="max-w-4xl mx-auto">
-                        <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">Order Card Generator</h1>
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            <div>
-                                <OrderForm items={items} setItems={setItems} />
-                                <div className="bg-white p-6 rounded-lg shadow-md">
-                                    <h3 className="text-lg font-semibold mb-4">ລາຍການປັດຈຸບັນ</h3>
-                                    {items.length===0 ? <p className="text-gray-500">ຍັງບໍ່ມີລາຍການ</p> :
-                                        <div className="space-y-2">
-                                            {items.map(item => (
-                                                <div key={item.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                                                    <span>{item.name}</span>
-                                                    <span className="text-sm text-gray-600">{item.quantity} x {formatPrice(item.price)} = {formatPrice(item.quantity*item.price)} ກີບ</span>
-                                                    <button onClick={()=>setItems(items.filter(i=>i.id!==item.id))} className="text-red-600 hover:text-red-800 ml-2">✕</button>
-                                                </div>
-                                            ))}
+    return (
+        <div className="min-h-screen bg-gray-100 p-4">
+            <div className="max-w-4xl mx-auto">
+                <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">Order Card Generator</h1>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div>
+                        <OrderForm items={items} setItems={setItems} />
+                        <div className="bg-white p-6 rounded-lg shadow-md">
+                            <h3 className="text-lg font-semibold mb-4">ລາຍການປັດຈຸບັນ</h3>
+                            {items.length===0 ? <p className="text-gray-500">ຍັງບໍ່ມີລາຍການ</p> :
+                                <div className="space-y-2">
+                                    {items.map(item => (
+                                        <div key={item.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                                            <span>{item.name}</span>
+                                            <span className="text-sm text-gray-600">{item.quantity} x {formatPrice(item.price)} = {formatPrice(item.quantity*item.price)} ກີບ</span>
+                                            <button onClick={()=>setItems(items.filter(i=>i.id!==item.id))} className="text-red-600 hover:text-red-800 ml-2">✕</button>
                                         </div>
-                                    }
-                                    {items.length>0 && <button onClick={generateViewURL} className="w-full mt-4 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
-                                        🔗 ສຳເລັດ
-                                    </button>}
+                                    ))}
                                 </div>
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-semibold mb-4">ຕົວຢ່າງ</h3>
-                                <OrderTable items={items} />
-                            </div>
+                            }
+                            {items.length>0 && <button onClick={generateViewURL} className="w-full mt-4 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
+                                🔗 ສຳເລັດ
+                            </button>}
                         </div>
                     </div>
+                    <div>
+                        <h3 className="text-lg font-semibold mb-4">ໃບບິນຕົວຢ່າງ</h3>
+                        <OrderTable items={items} />
+                    </div>
                 </div>
-            );
-        };
+            </div>
+        </div>
+    );
+};
 
         ReactDOM.render(<OrderCardGenerator />, document.getElementById('root'));
     </script>

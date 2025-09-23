@@ -33,7 +33,9 @@ body {
 const { useState, useEffect } = React;
 
 // Fixed QR Code URL - แก้ไขตรงนี้เพื่อใส่ QR Code ของคุณ
-const FIXED_QR_CODE = 'https://jumpshare.com/share/5V7qzqjGKB7fYnJRxJKI';
+const QR_CODE_FILENAME = 'qrcode.png';
+const FIXED_QR_CODE = `./${QR_CODE_FILENAME}`;
+
 
 // --- Encode/Decode Unicode Base64 URL-safe ---
 const encodeData = (data) => {
